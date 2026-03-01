@@ -18,7 +18,7 @@ const Home = ({ onAccessGame }: HomeProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-purple-50 to-pink-50 flex flex-col items-center justify-center gap-8 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-purple-50 to-pink-50 flex flex-col items-center justify-center gap-8 p-4 -mt-5">
       <img src={onenoteLogo} alt="OneNote Logo" className="w-32 h-32 drop-shadow-xl" />
       <h1 className="text-3xl font-bold text-purple-800">OneNote Online</h1>
       <p className="text-center text-gray-600 max-w-3xl text-sm leading-relaxed">
