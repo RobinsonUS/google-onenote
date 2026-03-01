@@ -171,10 +171,10 @@ export function posKey(x: number, y: number, z: number): string {
   return `${x},${y},${z}`;
 }
 
-export function generateTerrain(size: number = 32, seed: number = 42): WorldData {
+export function generateTerrain(size: number = 100, seed: number = 42): WorldData {
   const world: WorldData = new Map();
-  const SEA_LEVEL = 4;
-  const MAX_HEIGHT = 12;
+  const SEA_LEVEL = 6;
+  const MAX_HEIGHT = 15;
 
   for (let x = -size / 2; x < size / 2; x++) {
     for (let z = -size / 2; z < size / 2; z++) {
