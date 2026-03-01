@@ -153,21 +153,21 @@ function CameraController({ moveRef, camRef, worldRef, onCamPos, cameraRef }: {
   return null;
 }
 
-function Scene({ world, worldVersion, onBlockClick, particleEventsRef, droppedItemsRef, playerPosRef, onPickup, worldRef }: {
+function Scene({ world, worldVersion, particleEventsRef, droppedItemsRef, playerPosRef, onPickup, worldRef, lastModifiedBlock }: {
   world: WorldData; worldVersion: number;
-  onBlockClick: (x:number,y:number,z:number,normal:THREE.Vector3) => void;
   particleEventsRef: React.MutableRefObject<Array<{x:number;y:number;z:number;blockType:number}>>;
   droppedItemsRef: React.MutableRefObject<DroppedItem[]>;
   playerPosRef: React.MutableRefObject<THREE.Vector3>;
   onPickup: (blockType: number) => void;
   worldRef: React.MutableRefObject<WorldData>;
+  lastModifiedBlock: React.MutableRefObject<{ x: number; y: number; z: number } | null>;
 }) {
   return (
     <>
       <Sky sunPosition={[100, 60, 50]} turbidity={8} rayleigh={0.4} mieCoefficient={0.01} mieDirectionalG={0.8} />
       <ambientLight intensity={0.55} color="#fff5e0" />
       <directionalLight position={[30, 50, 20]} intensity={0.95} color="#ffe8c0" castShadow={false} />
-      <ChunkedVoxelWorld world={world} version={worldVersion} playerPos={playerPosRef} onBlockClick={onBlockClick} />
+      <ChunkedVoxelWorld world={world} version={worldVersion} playerPos={playerPosRef} lastModifiedBlock={lastModifiedBlock} />
       <BlockParticles eventsRef={particleEventsRef} />
       <DroppedItems itemsRef={droppedItemsRef} playerPosRef={playerPosRef} onPickup={onPickup} worldRef={worldRef} />
     </>
@@ -239,9 +239,10 @@ export function MinecraftGame() {
   const miningRafRef = useRef<number | null>(null);
   const holdTouchPosRef = useRef({ x: 0, y: 0 });
   const isHoldingRef = useRef(false);
+  const lastModifiedBlockRef = useRef<{ x: number; y: number; z: number } | null>(null);
 
   const onCamPos = useCallback((pos: THREE.Vector3) => { camPosRef.current.copy(pos); }, []);
-  const mutateWorld = useCallback((fn: (w: WorldData) => void) => { fn(worldRef.current); setWorldVersion(v => v + 1); }, []);
+  const mutateWorld = useCallback((fn: (w: WorldData) => void, modBlock?: { x: number; y: number; z: number }) => { lastModifiedBlockRef.current = modBlock ?? null; fn(worldRef.current); setWorldVersion(v => v + 1); }, []);
   const onPickup = useCallback((blockType: number) => { setInventory(inv => addToInventory(inv, blockType)); }, []);
 
   const startMining = useCallback((screenX?: number, screenY?: number) => {
@@ -304,7 +305,7 @@ export function MinecraftGame() {
         if (canHarvestBlock(bt, heldBlockType)) {
           droppedItemsRef.current.push(createDroppedItem(bx, by, bz, bt));
         }
-        mutateWorld(w => w.delete(key));
+        mutateWorld(w => w.delete(key), { x: bx, y: by, z: bz });
         // Reduce durability of held tool
         if (heldBlockType !== null && isTool(heldBlockType)) {
           setInventory(inv => {
@@ -351,7 +352,7 @@ export function MinecraftGame() {
       if (blockOverlapsPlayer(placeX, placeY, placeZ, camPosRef.current)) return;
       const key = posKey(placeX, placeY, placeZ);
       if (!worldRef.current.has(key)) {
-        mutateWorld(w => w.set(key, selectedBlock as BlockType));
+        mutateWorld(w => w.set(key, selectedBlock as BlockType), { x: placeX, y: placeY, z: placeZ });
         setInventory(inv => removeFromInventory(inv, selectedIndex));
       }
     }
@@ -451,9 +452,9 @@ export function MinecraftGame() {
   return (
     <div style={{ width:'100vw', height:'100vh', position:'relative', overflow:'hidden', touchAction:'none' }} onContextMenu={(e) => e.preventDefault()}>
       <div style={{ position:'absolute', inset:0 }} onTouchStart={handleLookTouchStart} onTouchMove={handleLookTouchMove} onTouchEnd={handleLookTouchEnd} onTouchCancel={handleLookTouchEnd}>
-        <Canvas camera={{ fov:70, near:0.1, far:200, position:[0,40,0] }} style={{ width:'100%', height:'100%' }} gl={{ antialias:false, powerPreference:'high-performance', precision:'mediump' }} dpr={Math.min(window.devicePixelRatio, 1.5)}>
+        <Canvas camera={{ fov:70, near:0.1, far:60, position:[0,40,0] }} style={{ width:'100%', height:'100%' }} gl={{ antialias:false, powerPreference:'high-performance', precision:'mediump' }} dpr={Math.min(window.devicePixelRatio, 1.5)}>
           <CameraController moveRef={moveRef} camRef={camRef} worldRef={worldRef} onCamPos={onCamPos} cameraRef={cameraRef} />
-          <Scene world={worldRef.current} worldVersion={worldVersion} onBlockClick={() => {}} particleEventsRef={particleEventsRef} droppedItemsRef={droppedItemsRef} playerPosRef={camPosRef} onPickup={onPickup} worldRef={worldRef} />
+          <Scene world={worldRef.current} worldVersion={worldVersion} particleEventsRef={particleEventsRef} droppedItemsRef={droppedItemsRef} playerPosRef={camPosRef} onPickup={onPickup} worldRef={worldRef} lastModifiedBlock={lastModifiedBlockRef} />
         </Canvas>
       </div>
       <div style={{ position:'fixed', bottom:90, left:16, zIndex:100 }}><TouchJoystick onMove={handleJoystickMove} size={160} /></div>
