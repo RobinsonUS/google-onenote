@@ -3,7 +3,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Sky } from "@react-three/drei";
 import * as THREE from "three";
 import { generateTerrain, WorldData, BLOCK_TYPES, posKey, BlockType, isItem, getBlockBreakTime, canHarvestBlock, isTool } from "@/lib/terrain";
-import { VoxelChunk } from "./VoxelChunk";
+import { ChunkedVoxelWorld } from "./ChunkedVoxelWorld";
 import { TouchJoystick } from "./TouchJoystick";
 import { HotBar, InventorySlot, addToInventory, removeFromInventory } from "./HotBar";
 import { BlockParticles, useBlockParticles } from "./BlockParticles";
@@ -167,7 +167,7 @@ function Scene({ world, worldVersion, onBlockClick, particleEventsRef, droppedIt
       <Sky sunPosition={[100, 60, 50]} turbidity={8} rayleigh={0.4} mieCoefficient={0.01} mieDirectionalG={0.8} />
       <ambientLight intensity={0.55} color="#fff5e0" />
       <directionalLight position={[30, 50, 20]} intensity={0.95} color="#ffe8c0" castShadow={false} />
-      <VoxelChunk world={world} version={worldVersion} onBlockClick={onBlockClick} />
+      <ChunkedVoxelWorld world={world} version={worldVersion} playerPos={playerPosRef} onBlockClick={onBlockClick} />
       <BlockParticles eventsRef={particleEventsRef} />
       <DroppedItems itemsRef={droppedItemsRef} playerPosRef={playerPosRef} onPickup={onPickup} worldRef={worldRef} />
     </>

@@ -50,7 +50,7 @@ export const BLOCK_TYPES = {
   SAND: 5,
   WATER: 6,
   LEAVES: 7,
-  SNOW: 8,
+  // SNOW removed
   PLANKS: 9,
   CRAFTING_TABLE: 10,
 } as const;
@@ -94,7 +94,7 @@ export const BLOCK_COLORS: Record<number, string> = {
   [BLOCK_TYPES.SAND]: '#F4E04D',
   [BLOCK_TYPES.WATER]: '#2196F3',
   [BLOCK_TYPES.LEAVES]: '#2E7D32',
-  [BLOCK_TYPES.SNOW]: '#ECEFF1',
+  
   [BLOCK_TYPES.PLANKS]: '#B8945A',
   [BLOCK_TYPES.CRAFTING_TABLE]: '#8B6914',
 };
@@ -107,7 +107,7 @@ export const BLOCK_THREE_COLORS: Record<number, number> = {
   [BLOCK_TYPES.SAND]: 0xdbc883,
   [BLOCK_TYPES.WATER]: 0x2662c8,
   [BLOCK_TYPES.LEAVES]: 0x2a6b1e,
-  [BLOCK_TYPES.SNOW]: 0xe0eaf0,
+  
   [BLOCK_TYPES.PLANKS]: 0xb8945a,
   [BLOCK_TYPES.CRAFTING_TABLE]: 0x8b6914,
 };
@@ -131,7 +131,7 @@ export const BLOCK_BREAK_TIME: Record<number, number> = {
   [BLOCK_TYPES.WOOD]: 4,
   [BLOCK_TYPES.SAND]: 0.7,
   [BLOCK_TYPES.LEAVES]: 0.3,
-  [BLOCK_TYPES.SNOW]: 0.75,
+  
   [BLOCK_TYPES.PLANKS]: 4,
   [BLOCK_TYPES.CRAFTING_TABLE]: 4,
 };
@@ -189,8 +189,6 @@ export function generateTerrain(size: number = 100, seed: number = 42): WorldDat
           // Determine surface block
           if (height < SEA_LEVEL + 1) {
             blockType = BLOCK_TYPES.SAND;
-          } else if (height > SEA_LEVEL + 8) {
-            blockType = BLOCK_TYPES.SNOW;
           } else {
             blockType = BLOCK_TYPES.GRASS;
           }
