@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { BLOCK_TYPES } from "./terrain";
 
 const CELL = 16;
-const COLS = 11;
+const COLS = 12;
 const ROWS = 3;
 
 type Pixel = [number, number, number];
@@ -150,6 +150,12 @@ const CRAFTING_TABLE_BOTTOM: Pixel[][] = (() => {
   return Array.from({length:16}, () => Array.from({length:16}, () => palette[Math.floor(rand()*palette.length)]));
 })();
 
+const COBBLESTONE: Pixel[][] = (() => {
+  const rand = seededRand(15);
+  const palette = [px(138,138,138), px(125,125,125), px(110,110,110), px(150,150,150), px(100,100,100)];
+  return Array.from({length:16}, () => Array.from({length:16}, () => palette[Math.floor(rand()*palette.length)]));
+})();
+
 // [top, side, bottom]
 const BLOCK_TEXTURES: Record<number, [Pixel[][], Pixel[][], Pixel[][]]> = {
   [BLOCK_TYPES.GRASS]: [GRASS_TOP, GRASS_SIDE, DIRT],
@@ -159,9 +165,9 @@ const BLOCK_TEXTURES: Record<number, [Pixel[][], Pixel[][], Pixel[][]]> = {
   [BLOCK_TYPES.SAND]:  [SAND, SAND, SAND],
   [BLOCK_TYPES.WATER]: [WATER, WATER, WATER],
   [BLOCK_TYPES.LEAVES]:[LEAVES, LEAVES, LEAVES],
-  
   [BLOCK_TYPES.PLANKS]:[PLANKS, PLANKS, PLANKS],
   [BLOCK_TYPES.CRAFTING_TABLE]: [CRAFTING_TABLE_TOP, CRAFTING_TABLE_SIDE, CRAFTING_TABLE_BOTTOM],
+  [BLOCK_TYPES.COBBLESTONE]: [COBBLESTONE, COBBLESTONE, COBBLESTONE],
 };
 
 let cachedTexture: THREE.CanvasTexture | null = null;
@@ -209,7 +215,7 @@ export function getBlockAtlasTexture(): THREE.CanvasTexture {
     data[idx] = pixel[0]; data[idx+1] = pixel[1]; data[idx+2] = pixel[2]; data[idx+3] = 255;
   }
 
-  const blockTypes = [BLOCK_TYPES.GRASS, BLOCK_TYPES.DIRT, BLOCK_TYPES.STONE, BLOCK_TYPES.WOOD, BLOCK_TYPES.SAND, BLOCK_TYPES.WATER, BLOCK_TYPES.LEAVES, BLOCK_TYPES.PLANKS, BLOCK_TYPES.CRAFTING_TABLE];
+  const blockTypes = [BLOCK_TYPES.GRASS, BLOCK_TYPES.DIRT, BLOCK_TYPES.STONE, BLOCK_TYPES.WOOD, BLOCK_TYPES.SAND, BLOCK_TYPES.WATER, BLOCK_TYPES.LEAVES, BLOCK_TYPES.PLANKS, BLOCK_TYPES.CRAFTING_TABLE, BLOCK_TYPES.COBBLESTONE];
 
   blockTypes.forEach((bt, colIdx) => {
     const tex = BLOCK_TEXTURES[bt];
@@ -276,12 +282,17 @@ export function getBlockAtlasTexture(): THREE.CanvasTexture {
     [ctCol, 2],
   ]);
 
+  const cobbleCol = BLOCK_ATLAS_COL[BLOCK_TYPES.COBBLESTONE];
+  loadTextureOverlay(texture, canvas, '/textures/cobblestone.webp', [
+    [cobbleCol, 0], [cobbleCol, 1], [cobbleCol, 2],
+  ]);
+
   return texture;
 }
 
 const BLOCK_ATLAS_COL: Record<number, number> = {
   [BLOCK_TYPES.GRASS]: 0, [BLOCK_TYPES.DIRT]: 1, [BLOCK_TYPES.STONE]: 2, [BLOCK_TYPES.WOOD]: 3,
-  [BLOCK_TYPES.SAND]: 4, [BLOCK_TYPES.WATER]: 5, [BLOCK_TYPES.LEAVES]: 6, [BLOCK_TYPES.PLANKS]: 7, [BLOCK_TYPES.CRAFTING_TABLE]: 8,
+  [BLOCK_TYPES.SAND]: 4, [BLOCK_TYPES.WATER]: 5, [BLOCK_TYPES.LEAVES]: 6, [BLOCK_TYPES.PLANKS]: 7, [BLOCK_TYPES.CRAFTING_TABLE]: 8, [BLOCK_TYPES.COBBLESTONE]: 9,
 };
 
 export function getBlockUV(blockType: number, faceRow: 0 | 1 | 2): [number, number, number, number] {
