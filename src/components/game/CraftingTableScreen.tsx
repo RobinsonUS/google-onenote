@@ -148,7 +148,7 @@ export function CraftingTableScreen({ inventory, onInventoryChange, onClose, sel
       }
     }
 
-    // Wooden axe: PP./PS./0S. (2 columns)
+    // Wooden axe: PP./PS./0S. OR .PP/.SP/.S0 (mirrored)
     if (filledSlots.length === 5) {
       for (let row = 0; row < 1; row++) {
         for (let col = 0; col < 2; col++) {
@@ -157,12 +157,25 @@ export function CraftingTableScreen({ inventory, onInventoryChange, onClose, sel
           const r1c0 = (row + 1) * 3 + col;
           const r1c1 = (row + 1) * 3 + col + 1;
           const r2c1 = (row + 2) * 3 + col + 1;
+          // Original: PP / PS / 0S
           if (
             slots[r0c0] === BLOCK_TYPES.PLANKS && slots[r0c1] === BLOCK_TYPES.PLANKS &&
             slots[r1c0] === BLOCK_TYPES.PLANKS && slots[r1c1] === ITEM_TYPES.STICK &&
             slots[r2c1] === ITEM_TYPES.STICK
           ) {
             const usedIndices = new Set([r0c0, r0c1, r1c0, r1c1, r2c1]);
+            const others = slots.filter((s, i) => !usedIndices.has(i) && s !== null);
+            if (others.length === 0) return { blockType: ITEM_TYPES.WOODEN_AXE, count: 1 };
+          }
+          // Mirrored: PP / SP / S0
+          const r1c0m = (row + 1) * 3 + col;
+          const r2c0 = (row + 2) * 3 + col;
+          if (
+            slots[r0c0] === BLOCK_TYPES.PLANKS && slots[r0c1] === BLOCK_TYPES.PLANKS &&
+            slots[r1c0m] === ITEM_TYPES.STICK && slots[r1c1] === BLOCK_TYPES.PLANKS &&
+            slots[r2c0] === ITEM_TYPES.STICK
+          ) {
+            const usedIndices = new Set([r0c0, r0c1, r1c0m, r1c1, r2c0]);
             const others = slots.filter((s, i) => !usedIndices.has(i) && s !== null);
             if (others.length === 0) return { blockType: ITEM_TYPES.WOODEN_AXE, count: 1 };
           }
