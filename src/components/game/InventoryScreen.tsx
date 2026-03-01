@@ -216,7 +216,7 @@ export function InventoryScreen({ inventory, onInventoryChange, onClose, selecte
     if (selectedIndex === null) {
       const cs = craftSlots[craftIndex];
       if (cs.blockType !== null && cs.count > 0) {
-        setHeldItems({ blockType: cs.blockType, count: cs.count });
+        setHeldItems({ blockType: cs.blockType, count: cs.count, durability: cs.durability });
         setSelectedIndex(virtualIndex);
         setIsSplitPick(false);
       }
@@ -238,7 +238,7 @@ export function InventoryScreen({ inventory, onInventoryChange, onClose, selecte
       const targetEmpty = targetSlot.blockType === null || targetSlot.count <= 0;
       if (sourceEmpty && targetEmpty) { setSelectedIndex(null); setHeldItems({ blockType: null, count: 0 }); return; }
 
-      let newSource: InventorySlot = { blockType: targetSlot.blockType, count: targetSlot.count };
+      let newSource: InventorySlot = { blockType: targetSlot.blockType, count: targetSlot.count, durability: targetSlot.durability };
       let newTarget: InventorySlot;
       if (sourceSlot.blockType !== null && sourceSlot.count > 0 && targetSlot.blockType === sourceSlot.blockType && !isTool(sourceSlot.blockType)) {
         const total = targetSlot.count + sourceSlot.count;
@@ -250,7 +250,7 @@ export function InventoryScreen({ inventory, onInventoryChange, onClose, selecte
           newSource = { blockType: sourceSlot.blockType, count: total - MAX_STACK };
         }
       } else {
-        newTarget = { blockType: sourceSlot.blockType, count: sourceSlot.count };
+        newTarget = { blockType: sourceSlot.blockType, count: sourceSlot.count, durability: sourceSlot.durability };
       }
 
       const nextCraft = [...craftSlots];
@@ -289,7 +289,7 @@ export function InventoryScreen({ inventory, onInventoryChange, onClose, selecte
       const slot = inventory[index];
       if (slot.blockType === null || slot.count <= 0) return;
       setSelectedIndex(index);
-      setHeldItems({ blockType: slot.blockType, count: slot.count });
+      setHeldItems({ blockType: slot.blockType, count: slot.count, durability: slot.durability });
       setIsSplitPick(false);
     } else if (selectedIndex === index) {
       // Merge held items back into the slot
@@ -326,9 +326,9 @@ export function InventoryScreen({ inventory, onInventoryChange, onClose, selecte
             nextCraft[ci] = { blockType: sourceSlot.blockType, count: total - MAX_STACK };
           }
         } else {
-          nextInv[index] = { blockType: sourceSlot.blockType, count: sourceSlot.count };
+          nextInv[index] = { blockType: sourceSlot.blockType, count: sourceSlot.count, durability: sourceSlot.durability };
           if (!targetEmpty) {
-            nextCraft[ci] = { blockType: targetSlot.blockType, count: targetSlot.count };
+            nextCraft[ci] = { blockType: targetSlot.blockType, count: targetSlot.count, durability: targetSlot.durability };
           } else {
             nextCraft[ci] = { blockType: null, count: 0 };
           }
@@ -370,9 +370,9 @@ export function InventoryScreen({ inventory, onInventoryChange, onClose, selecte
         }
       } else if (splitMove) {
         if (targetEmpty) {
-          next[index] = { blockType: source.blockType, count: source.count };
+          next[index] = { blockType: source.blockType, count: source.count, durability: source.durability };
         } else {
-          next[index] = { blockType: source.blockType, count: source.count };
+          next[index] = { blockType: source.blockType, count: source.count, durability: source.durability };
           const srcSlot = next[selectedIndex];
           if (srcSlot.blockType === null || srcSlot.count <= 0) {
             next[selectedIndex] = { blockType: target.blockType, count: target.count };
@@ -391,8 +391,8 @@ export function InventoryScreen({ inventory, onInventoryChange, onClose, selecte
           }
         }
       } else {
-        next[selectedIndex] = { blockType: target.blockType, count: target.count };
-        next[index] = { blockType: source.blockType, count: source.count };
+        next[selectedIndex] = { blockType: target.blockType, count: target.count, durability: target.durability };
+        next[index] = { blockType: source.blockType, count: source.count, durability: source.durability };
       }
 
       onInventoryChange(next);

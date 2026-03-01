@@ -268,7 +268,7 @@ export function CraftingTableScreen({ inventory, onInventoryChange, onClose, sel
     if (selectedIndex === null) {
       const cs = craftSlots[craftIndex];
       if (cs.blockType !== null && cs.count > 0) {
-        setHeldItems({ blockType: cs.blockType, count: cs.count });
+        setHeldItems({ blockType: cs.blockType, count: cs.count, durability: cs.durability });
         setSelectedIndex(virtualIndex);
         setIsSplitPick(false);
       }
@@ -290,7 +290,7 @@ export function CraftingTableScreen({ inventory, onInventoryChange, onClose, sel
       const targetEmpty = targetSlot.blockType === null || targetSlot.count <= 0;
       if (sourceEmpty && targetEmpty) { setSelectedIndex(null); setHeldItems({ blockType: null, count: 0 }); return; }
 
-      let newSource: InventorySlot = { blockType: targetSlot.blockType, count: targetSlot.count };
+      let newSource: InventorySlot = { blockType: targetSlot.blockType, count: targetSlot.count, durability: targetSlot.durability };
       let newTarget: InventorySlot;
       if (sourceSlot.blockType !== null && sourceSlot.count > 0 && targetSlot.blockType === sourceSlot.blockType && !isTool(sourceSlot.blockType)) {
         const total = targetSlot.count + sourceSlot.count;
@@ -302,7 +302,7 @@ export function CraftingTableScreen({ inventory, onInventoryChange, onClose, sel
           newSource = { blockType: sourceSlot.blockType, count: total - MAX_STACK };
         }
       } else {
-        newTarget = { blockType: sourceSlot.blockType, count: sourceSlot.count };
+        newTarget = { blockType: sourceSlot.blockType, count: sourceSlot.count, durability: sourceSlot.durability };
       }
 
       const nextCraft = [...craftSlots];
@@ -339,7 +339,7 @@ export function CraftingTableScreen({ inventory, onInventoryChange, onClose, sel
       const slot = inventory[index];
       if (slot.blockType === null || slot.count <= 0) return;
       setSelectedIndex(index);
-      setHeldItems({ blockType: slot.blockType, count: slot.count });
+      setHeldItems({ blockType: slot.blockType, count: slot.count, durability: slot.durability });
       setIsSplitPick(false);
     } else if (selectedIndex === index) {
       setSelectedIndex(null);
@@ -365,8 +365,8 @@ export function CraftingTableScreen({ inventory, onInventoryChange, onClose, sel
             nextCraft[ci] = { blockType: sourceSlot.blockType, count: total - MAX_STACK };
           }
         } else {
-          nextInv[index] = { blockType: sourceSlot.blockType, count: sourceSlot.count };
-          if (!targetEmpty) nextCraft[ci] = { blockType: targetSlot.blockType, count: targetSlot.count };
+          nextInv[index] = { blockType: sourceSlot.blockType, count: sourceSlot.count, durability: sourceSlot.durability };
+          if (!targetEmpty) nextCraft[ci] = { blockType: targetSlot.blockType, count: targetSlot.count, durability: targetSlot.durability };
           else nextCraft[ci] = { blockType: null, count: 0 };
         }
         setCraftSlots(nextCraft);
@@ -402,19 +402,19 @@ export function CraftingTableScreen({ inventory, onInventoryChange, onClose, sel
         }
       } else if (splitMove) {
         if (targetEmpty) {
-          next[index] = { blockType: source.blockType, count: source.count };
+          next[index] = { blockType: source.blockType, count: source.count, durability: source.durability };
         } else {
-          next[index] = { blockType: source.blockType, count: source.count };
+          next[index] = { blockType: source.blockType, count: source.count, durability: source.durability };
           const srcSlot = next[selectedIndex];
           if (srcSlot.blockType === null || srcSlot.count <= 0) {
-            next[selectedIndex] = { blockType: target.blockType, count: target.count };
+            next[selectedIndex] = { blockType: target.blockType, count: target.count, durability: target.durability };
           } else if (srcSlot.blockType === target.blockType && srcSlot.count + target.count <= MAX_STACK) {
             next[selectedIndex] = { blockType: target.blockType, count: srcSlot.count + target.count };
           } else {
             let placed = false;
             for (let i = 0; i < next.length; i++) {
               if ((next[i].blockType === null || next[i].count <= 0) && i !== index) {
-                next[i] = { blockType: target.blockType, count: target.count };
+                next[i] = { blockType: target.blockType, count: target.count, durability: target.durability };
                 placed = true;
                 break;
               }
@@ -423,8 +423,8 @@ export function CraftingTableScreen({ inventory, onInventoryChange, onClose, sel
           }
         }
       } else {
-        next[selectedIndex] = { blockType: target.blockType, count: target.count };
-        next[index] = { blockType: source.blockType, count: source.count };
+        next[selectedIndex] = { blockType: target.blockType, count: target.count, durability: target.durability };
+        next[index] = { blockType: source.blockType, count: source.count, durability: source.durability };
       }
       onInventoryChange(next);
       setSelectedIndex(null);
