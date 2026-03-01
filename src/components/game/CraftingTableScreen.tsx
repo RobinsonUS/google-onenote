@@ -292,7 +292,7 @@ export function CraftingTableScreen({ inventory, onInventoryChange, onClose, sel
 
       let newSource: InventorySlot = { blockType: targetSlot.blockType, count: targetSlot.count };
       let newTarget: InventorySlot;
-      if (sourceSlot.blockType !== null && sourceSlot.count > 0 && targetSlot.blockType === sourceSlot.blockType) {
+      if (sourceSlot.blockType !== null && sourceSlot.count > 0 && targetSlot.blockType === sourceSlot.blockType && !isTool(sourceSlot.blockType)) {
         const total = targetSlot.count + sourceSlot.count;
         if (total <= MAX_STACK) {
           newTarget = { blockType: sourceSlot.blockType, count: total };
@@ -355,7 +355,7 @@ export function CraftingTableScreen({ inventory, onInventoryChange, onClose, sel
         const nextInv = inventory.map(s => ({ ...s }));
         const ci = selectedIndex - VIRTUAL_CRAFT_START;
         const nextCraft = [...craftSlots];
-        if (sourceSlot.blockType !== null && sourceSlot.count > 0 && targetSlot.blockType === sourceSlot.blockType) {
+        if (sourceSlot.blockType !== null && sourceSlot.count > 0 && targetSlot.blockType === sourceSlot.blockType && !isTool(sourceSlot.blockType)) {
           const total = targetSlot.count + sourceSlot.count;
           if (total <= MAX_STACK) {
             nextInv[index] = { blockType: targetSlot.blockType, count: total };
@@ -384,7 +384,7 @@ export function CraftingTableScreen({ inventory, onInventoryChange, onClose, sel
 
       const next = inventory.map(s => ({ ...s }));
       const splitMove = isSplitPick;
-      if (source.blockType !== null && source.count > 0 && target.blockType === source.blockType) {
+      if (source.blockType !== null && source.count > 0 && target.blockType === source.blockType && !isTool(source.blockType)) {
         const total = target.count + source.count;
         if (total <= MAX_STACK) {
           next[index] = { blockType: target.blockType!, count: total };
