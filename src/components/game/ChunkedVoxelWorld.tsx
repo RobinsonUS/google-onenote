@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import * as THREE from "three";
 import { WorldData, BLOCK_TYPES, posKey } from "@/lib/terrain";
 import { getBlockAtlasTexture, getBlockUV } from "@/lib/textures";
@@ -30,32 +30,50 @@ function getChunkCoord(worldCoord: number): number {
   return Math.floor(worldCoord / CHUNK_SIZE);
 }
 
-function buildChunkMesh(world: WorldData, cx: number, cz: number): THREE.BufferGeometry | null {
-  const x0 = cx * CHUNK_SIZE;
-  const z0 = cz * CHUNK_SIZE;
-  const x1 = x0 + CHUNK_SIZE;
-  const z1 = z0 + CHUNK_SIZE;
-
-  // Collect blocks in this chunk
-  let faceCount = 0;
-  const entries: [number, number, number, number][] = [];
-
-  for (const [key, blockType] of world) {
-    if (blockType === BLOCK_TYPES.AIR) continue;
+// Pre-scan Y range per chunk to avoid iterating all 256 possible Y levels
+function getYRange(world: WorldData, x0: number, z0: number, x1: number, z1: number): [number, number] {
+  let minY = 999, maxY = -999;
+  for (const key of world.keys()) {
     const i1 = key.indexOf(',');
     const i2 = key.indexOf(',', i1 + 1);
     const x = +key.substring(0, i1);
     const z = +key.substring(i2 + 1);
     if (x < x0 || x >= x1 || z < z0 || z >= z1) continue;
     const y = +key.substring(i1 + 1, i2);
-    entries.push([x, y, z, blockType]);
+    if (y < minY) minY = y;
+    if (y > maxY) maxY = y;
+  }
+  return minY <= maxY ? [minY, maxY] : [0, 0];
+}
 
-    for (let f = 0; f < 6; f++) {
-      const dir = FACES[f].dir;
-      const neighbor = world.get(posKey(x + dir[0], y + dir[1], z + dir[2])) ?? BLOCK_TYPES.AIR;
-      if (neighbor !== BLOCK_TYPES.AIR && neighbor !== BLOCK_TYPES.LEAVES) continue;
-      if (blockType === BLOCK_TYPES.LEAVES && neighbor === BLOCK_TYPES.LEAVES) continue;
-      faceCount++;
+function buildChunkMesh(world: WorldData, cx: number, cz: number): THREE.BufferGeometry | null {
+  const x0 = cx * CHUNK_SIZE;
+  const z0 = cz * CHUNK_SIZE;
+  const x1 = x0 + CHUNK_SIZE;
+  const z1 = z0 + CHUNK_SIZE;
+
+  // Get Y range for this chunk area
+  const [minY, maxY] = getYRange(world, x0, z0, x1, z1);
+
+  // First pass: count faces by iterating chunk coordinates directly
+  let faceCount = 0;
+  const entries: [number, number, number, number][] = [];
+
+  for (let x = x0; x < x1; x++) {
+    for (let z = z0; z < z1; z++) {
+      for (let y = minY; y <= maxY; y++) {
+        const blockType = world.get(posKey(x, y, z));
+        if (blockType === undefined || blockType === BLOCK_TYPES.AIR) continue;
+        entries.push([x, y, z, blockType]);
+
+        for (let f = 0; f < 6; f++) {
+          const dir = FACES[f].dir;
+          const neighbor = world.get(posKey(x + dir[0], y + dir[1], z + dir[2])) ?? BLOCK_TYPES.AIR;
+          if (neighbor !== BLOCK_TYPES.AIR && neighbor !== BLOCK_TYPES.LEAVES) continue;
+          if (blockType === BLOCK_TYPES.LEAVES && neighbor === BLOCK_TYPES.LEAVES) continue;
+          faceCount++;
+        }
+      }
     }
   }
 
@@ -124,6 +142,20 @@ function buildChunkMesh(world: WorldData, cx: number, cz: number): THREE.BufferG
   return geo;
 }
 
+// Shared material singleton
+let sharedMat: THREE.MeshLambertMaterial | null = null;
+function getSharedMaterial(): THREE.MeshLambertMaterial {
+  if (!sharedMat) {
+    sharedMat = new THREE.MeshLambertMaterial({
+      map: getBlockAtlasTexture(),
+      vertexColors: true,
+      side: THREE.FrontSide,
+      alphaTest: 0.1,
+    });
+  }
+  return sharedMat;
+}
+
 function ChunkMesh({ world, cx, cz, version }: { world: WorldData; cx: number; cz: number; version: number }) {
   const [geo, setGeo] = useState<THREE.BufferGeometry | null>(null);
   const buildIdRef = useRef(0);
@@ -141,65 +173,68 @@ function ChunkMesh({ world, cx, cz, version }: { world: WorldData; cx: number; c
     return () => clearTimeout(timer);
   }, [version, cx, cz, world]);
 
-  const mat = useRef(
-    new THREE.MeshLambertMaterial({
-      map: getBlockAtlasTexture(),
-      vertexColors: true,
-      side: THREE.FrontSide,
-      alphaTest: 0.1,
-    })
-  ).current;
-
   if (!geo) return null;
-  return <mesh geometry={geo} material={mat} />;
+  return <mesh geometry={geo} material={getSharedMaterial()} />;
 }
 
 export function ChunkedVoxelWorld({ world, version, playerPos, onBlockClick }: ChunkedVoxelWorldProps) {
   const [activeChunks, setActiveChunks] = useState<string[]>([]);
   const lastChunkRef = useRef<string>("");
+  // Track per-chunk versions to avoid rebuilding unaffected chunks
+  const chunkVersionsRef = useRef<Map<string, number>>(new Map());
+  const lastGlobalVersion = useRef(version);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const px = playerPos.current.x;
-      const pz = playerPos.current.z;
-      const pcx = getChunkCoord(px);
-      const pcz = getChunkCoord(pz);
-      const key = `${pcx},${pcz}`;
-      if (key === lastChunkRef.current) return;
-      lastChunkRef.current = key;
-
-      const chunks: string[] = [];
-      for (let dx = -1; dx <= 1; dx++) {
-        for (let dz = -1; dz <= 1; dz++) {
-          chunks.push(chunkKey(pcx + dx, pcz + dz));
-        }
-      }
-      setActiveChunks(chunks);
-    }, 200);
-    return () => clearInterval(interval);
-  }, [playerPos]);
-
-  // Also trigger on version change
-  useEffect(() => {
+  const computeChunks = useCallback(() => {
     const px = playerPos.current.x;
     const pz = playerPos.current.z;
     const pcx = getChunkCoord(px);
     const pcz = getChunkCoord(pz);
-    lastChunkRef.current = `${pcx},${pcz}`;
+    const key = `${pcx},${pcz}`;
+    
+    const versionChanged = version !== lastGlobalVersion.current;
+    if (key === lastChunkRef.current && !versionChanged) return;
+    
+    lastChunkRef.current = key;
+    lastGlobalVersion.current = version;
+
     const chunks: string[] = [];
     for (let dx = -1; dx <= 1; dx++) {
       for (let dz = -1; dz <= 1; dz++) {
-        chunks.push(chunkKey(pcx + dx, pcz + dz));
+        const ck = chunkKey(pcx + dx, pcz + dz);
+        chunks.push(ck);
+        // Only bump version for chunks that don't have the current version
+        if (!chunkVersionsRef.current.has(ck)) {
+          chunkVersionsRef.current.set(ck, version);
+        }
       }
     }
+    
+    // On world mutation, bump all active chunk versions
+    if (versionChanged) {
+      for (const ck of chunks) {
+        chunkVersionsRef.current.set(ck, version);
+      }
+    }
+    
     setActiveChunks(chunks);
-  }, [version, playerPos]);
+  }, [playerPos, version]);
+
+  useEffect(() => {
+    const interval = setInterval(computeChunks, 200);
+    return () => clearInterval(interval);
+  }, [computeChunks]);
+
+  // Also trigger on version change
+  useEffect(() => {
+    computeChunks();
+  }, [version, computeChunks]);
 
   return (
     <>
       {activeChunks.map(ck => {
         const [cx, cz] = ck.split(',').map(Number);
-        return <ChunkMesh key={ck} world={world} cx={cx} cz={cz} version={version} />;
+        const cv = chunkVersionsRef.current.get(ck) ?? 0;
+        return <ChunkMesh key={ck} world={world} cx={cx} cz={cz} version={cv} />;
       })}
     </>
   );
