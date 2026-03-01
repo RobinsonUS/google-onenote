@@ -30,7 +30,7 @@ export function renderBlockIconToDataURL(blockType: number): string {
   if (cached) return cached;
 
   const { renderer, canvas } = getSharedRenderer();
-  renderer.setClearColor(0x000000, 0);
+  renderer.setClearColor(0x8b8b8b, 1);
 
   const scene = new THREE.Scene();
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
