@@ -8,7 +8,7 @@ const Home = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (text.trim().toLowerCase() === "minecraft") {
+    if (text.trim().toLowerCase().includes("minecraft")) {
       navigate("/game");
     } else {
       setText("");
@@ -25,7 +25,7 @@ const Home = () => {
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Tapez quelque chose..."
-          className="flex-1 h-11 rounded-xl border border-purple-200 bg-white/80 px-4 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+          className="flex-1 h-11 rounded-xl border border-purple-200 bg-white/80 px-4 text-base text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
         />
         <button
           type="submit"
