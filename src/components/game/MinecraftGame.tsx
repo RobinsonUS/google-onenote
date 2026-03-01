@@ -215,7 +215,7 @@ function blockOverlapsPlayer(bx: number, by: number, bz: number, playerPos: THRE
 }
 
 export function MinecraftGame() {
-  const worldRef = useRef<WorldData>(generateTerrain(20));
+  const worldRef = useRef<WorldData>(generateTerrain(100));
   const [worldVersion, setWorldVersion] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [inventory, setInventory] = useState<InventorySlot[]>(createFullInventory());
