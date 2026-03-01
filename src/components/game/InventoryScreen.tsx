@@ -7,6 +7,7 @@ import { renderBlockIconToDataURL, clearIconCache } from "@/lib/blockIconRendere
 const ITEM_TEXTURES: Record<number, string> = {
   [ITEM_TYPES.STICK]: '/textures/stick.webp',
   [ITEM_TYPES.WOODEN_AXE]: '/textures/wooden_axe.png?v=3',
+  [ITEM_TYPES.WOODEN_PICKAXE]: '/textures/wooden_pickaxe.png',
 };
 
 function SmallBlockIcon({ blockType }: { blockType: number }) {

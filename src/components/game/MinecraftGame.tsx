@@ -2,7 +2,7 @@ import { useRef, useState, useCallback, useEffect } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Sky } from "@react-three/drei";
 import * as THREE from "three";
-import { generateTerrain, WorldData, BLOCK_TYPES, posKey, BlockType, isItem, getBlockBreakTime } from "@/lib/terrain";
+import { generateTerrain, WorldData, BLOCK_TYPES, posKey, BlockType, isItem, getBlockBreakTime, canHarvestBlock } from "@/lib/terrain";
 import { VoxelChunk } from "./VoxelChunk";
 import { TouchJoystick } from "./TouchJoystick";
 import { HotBar, InventorySlot, addToInventory, removeFromInventory } from "./HotBar";
@@ -300,7 +300,10 @@ export function MinecraftGame() {
       const bt = worldRef.current.get(key);
       if (bt !== undefined && bt !== BLOCK_TYPES.AIR) {
         emitParticles(bx, by, bz, bt);
-        droppedItemsRef.current.push(createDroppedItem(bx, by, bz, bt));
+        const heldBlockType = inventoryRef.current[selectedIndexRef.current]?.blockType ?? null;
+        if (canHarvestBlock(bt, heldBlockType)) {
+          droppedItemsRef.current.push(createDroppedItem(bx, by, bz, bt));
+        }
         mutateWorld(w => w.delete(key));
       }
       miningRef.current = null; setMiningProgress(0);

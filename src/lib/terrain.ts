@@ -59,6 +59,7 @@ export const BLOCK_TYPES = {
 export const ITEM_TYPES = {
   STICK: 100,
   WOODEN_AXE: 101,
+  WOODEN_PICKAXE: 102,
 } as const;
 
 export type ItemType = typeof ITEM_TYPES[keyof typeof ITEM_TYPES];
@@ -70,6 +71,7 @@ export function isItem(id: number): boolean {
 export const ITEM_NAMES: Record<number, string> = {
   [ITEM_TYPES.STICK]: 'Bâton',
   [ITEM_TYPES.WOODEN_AXE]: 'Hache en bois',
+  [ITEM_TYPES.WOODEN_PICKAXE]: 'Pioche en bois',
 };
 
 export type BlockType = typeof BLOCK_TYPES[keyof typeof BLOCK_TYPES];
@@ -128,12 +130,25 @@ export const BLOCK_BREAK_TIME: Record<number, number> = {
 // Wood-type blocks that the axe speeds up
 const WOOD_BLOCKS = new Set<number>([BLOCK_TYPES.WOOD, BLOCK_TYPES.PLANKS, BLOCK_TYPES.CRAFTING_TABLE]);
 
+// Blocks that require a pickaxe to drop items
+const PICKAXE_REQUIRED = new Set<number>([BLOCK_TYPES.STONE]);
+
 export function getBlockBreakTime(blockType: number, heldItem?: number | null): number {
   const base = BLOCK_BREAK_TIME[blockType] ?? 1;
   if (heldItem === ITEM_TYPES.WOODEN_AXE && WOOD_BLOCKS.has(blockType)) {
-    return 2; // Axe cuts wood in 2s instead of 4s
+    return 2;
+  }
+  if (heldItem === ITEM_TYPES.WOODEN_PICKAXE && blockType === BLOCK_TYPES.STONE) {
+    return 2.5;
   }
   return base;
+}
+
+export function canHarvestBlock(blockType: number, heldItem?: number | null): boolean {
+  if (PICKAXE_REQUIRED.has(blockType)) {
+    return heldItem === ITEM_TYPES.WOODEN_PICKAXE;
+  }
+  return true;
 }
 
 export function getItemOrBlockName(id: number): string {
