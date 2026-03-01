@@ -1,15 +1,17 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import onenoteLogo from "@/assets/onenote-logo.png";
 
-const Home = () => {
+interface HomeProps {
+  onAccessGame: () => void;
+}
+
+const Home = ({ onAccessGame }: HomeProps) => {
   const [text, setText] = useState("");
-  const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (text.trim().toLowerCase().includes("minecraft")) {
-      navigate("/game");
+      onAccessGame();
     } else {
       setText("");
     }
