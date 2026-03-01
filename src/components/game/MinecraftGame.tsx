@@ -215,7 +215,7 @@ function blockOverlapsPlayer(bx: number, by: number, bz: number, playerPos: THRE
 }
 
 export function MinecraftGame() {
-  const worldRef = useRef<WorldData>(generateTerrain(100));
+  const worldRef = useRef<WorldData>(generateTerrain(80));
   const [worldVersion, setWorldVersion] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [inventory, setInventory] = useState<InventorySlot[]>(createFullInventory());
@@ -452,7 +452,7 @@ export function MinecraftGame() {
   return (
     <div style={{ width:'100vw', height:'100vh', position:'relative', overflow:'hidden', touchAction:'none' }} onContextMenu={(e) => e.preventDefault()}>
       <div style={{ position:'absolute', inset:0 }} onTouchStart={handleLookTouchStart} onTouchMove={handleLookTouchMove} onTouchEnd={handleLookTouchEnd} onTouchCancel={handleLookTouchEnd}>
-        <Canvas camera={{ fov:70, near:0.1, far:60, position:[0,40,0] }} style={{ width:'100%', height:'100%' }} gl={{ antialias:false, powerPreference:'high-performance', precision:'mediump' }} dpr={Math.min(window.devicePixelRatio, 1.5)}>
+        <Canvas camera={{ fov:70, near:0.1, far:50, position:[0,40,0] }} style={{ width:'100%', height:'100%' }} gl={{ antialias:false, powerPreference:'high-performance', precision:'mediump', stencil:false, depth:true }} dpr={Math.min(window.devicePixelRatio, 1.25)}>
           <CameraController moveRef={moveRef} camRef={camRef} worldRef={worldRef} onCamPos={onCamPos} cameraRef={cameraRef} />
           <Scene world={worldRef.current} worldVersion={worldVersion} particleEventsRef={particleEventsRef} droppedItemsRef={droppedItemsRef} playerPosRef={camPosRef} onPickup={onPickup} worldRef={worldRef} lastModifiedBlock={lastModifiedBlockRef} />
         </Canvas>
