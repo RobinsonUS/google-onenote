@@ -183,17 +183,16 @@ export function generateTerrain(size: number = 100, seed: number = 42): WorldDat
       const heightNoise = octaveNoise(nx, nz, 4);
       const height = Math.floor(SEA_LEVEL + heightNoise * MAX_HEIGHT);
 
+      // Use a separate noise to decide sand patches
+      const sandNoise = smoothNoise((x + seed * 3) * 0.08, (z + seed * 3) * 0.08);
+      const isSandPatch = sandNoise > 0.65;
+
       for (let y = 0; y <= height; y++) {
         let blockType: BlockType;
         if (y === height) {
-          // Determine surface block
-          if (height <= SEA_LEVEL) {
-            blockType = BLOCK_TYPES.SAND;
-          } else {
-            blockType = BLOCK_TYPES.GRASS;
-          }
+          blockType = isSandPatch ? BLOCK_TYPES.SAND : BLOCK_TYPES.GRASS;
         } else if (y > height - 3) {
-          blockType = BLOCK_TYPES.DIRT;
+          blockType = isSandPatch ? BLOCK_TYPES.SAND : BLOCK_TYPES.DIRT;
         } else {
           blockType = BLOCK_TYPES.STONE;
         }
