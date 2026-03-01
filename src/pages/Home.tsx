@@ -21,7 +21,7 @@ const Home = ({ onAccessGame }: HomeProps) => {
     <div className="min-h-screen bg-gradient-to-br from-purple-100 via-purple-50 to-pink-50 flex flex-col items-center justify-center gap-8 p-4">
       <img src={onenoteLogo} alt="OneNote Logo" className="w-32 h-32 drop-shadow-xl" />
       <h1 className="text-3xl font-bold text-purple-800">OneNote Online</h1>
-      <p className="text-center text-gray-600 max-w-2xl text-sm leading-relaxed">
+      <p className="text-center text-gray-600 max-w-3xl text-sm leading-relaxed">
         OneNote est une application de prise de notes numérique qui fournit un emplacement unique pour conserver toutes vos notes, recherches, plans et informations, tout ce que vous devez mémoriser et gérer dans votre vie à la maison, au travail ou à l'école.
       </p>
       <form onSubmit={handleSubmit} className="flex gap-2 w-full max-w-md">
