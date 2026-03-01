@@ -2,7 +2,7 @@ import { useRef, useState, useCallback, useEffect } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Sky } from "@react-three/drei";
 import * as THREE from "three";
-import { generateTerrain, WorldData, BLOCK_TYPES, posKey, BlockType, isItem, getBlockBreakTime, canHarvestBlock, isTool } from "@/lib/terrain";
+import { generateTerrain, WorldData, BLOCK_TYPES, posKey, BlockType, isItem, getBlockBreakTime, canHarvestBlock, isTool, BLOCK_DROP } from "@/lib/terrain";
 import { ChunkedVoxelWorld } from "./ChunkedVoxelWorld";
 import { TouchJoystick } from "./TouchJoystick";
 import { HotBar, InventorySlot, addToInventory, removeFromInventory } from "./HotBar";
@@ -303,7 +303,8 @@ export function MinecraftGame() {
         emitParticles(bx, by, bz, bt);
         const heldBlockType = inventoryRef.current[selectedIndexRef.current]?.blockType ?? null;
         if (canHarvestBlock(bt, heldBlockType)) {
-          droppedItemsRef.current.push(createDroppedItem(bx, by, bz, bt));
+          const dropType = BLOCK_DROP[bt] ?? bt;
+          droppedItemsRef.current.push(createDroppedItem(bx, by, bz, dropType));
         }
         mutateWorld(w => w.delete(key), { x: bx, y: by, z: bz });
         // Reduce durability of held tool

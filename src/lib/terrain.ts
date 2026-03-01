@@ -50,9 +50,9 @@ export const BLOCK_TYPES = {
   SAND: 5,
   WATER: 6,
   LEAVES: 7,
-  // SNOW removed
   PLANKS: 9,
   CRAFTING_TABLE: 10,
+  COBBLESTONE: 11,
 } as const;
 
 // Non-block items (IDs >= 100, cannot be placed in the world)
@@ -83,6 +83,11 @@ export const ITEM_NAMES: Record<number, string> = {
   [ITEM_TYPES.WOODEN_PICKAXE]: 'Pioche en bois',
 };
 
+// What a block drops when mined (if different from itself)
+export const BLOCK_DROP: Partial<Record<number, number>> = {
+  [BLOCK_TYPES.STONE]: BLOCK_TYPES.COBBLESTONE,
+};
+
 export type BlockType = typeof BLOCK_TYPES[keyof typeof BLOCK_TYPES];
 
 export const BLOCK_COLORS: Record<number, string> = {
@@ -94,9 +99,9 @@ export const BLOCK_COLORS: Record<number, string> = {
   [BLOCK_TYPES.SAND]: '#F4E04D',
   [BLOCK_TYPES.WATER]: '#2196F3',
   [BLOCK_TYPES.LEAVES]: '#2E7D32',
-  
   [BLOCK_TYPES.PLANKS]: '#B8945A',
   [BLOCK_TYPES.CRAFTING_TABLE]: '#8B6914',
+  [BLOCK_TYPES.COBBLESTONE]: '#8A8A8A',
 };
 
 export const BLOCK_THREE_COLORS: Record<number, number> = {
@@ -107,9 +112,9 @@ export const BLOCK_THREE_COLORS: Record<number, number> = {
   [BLOCK_TYPES.SAND]: 0xdbc883,
   [BLOCK_TYPES.WATER]: 0x2662c8,
   [BLOCK_TYPES.LEAVES]: 0x2a6b1e,
-  
   [BLOCK_TYPES.PLANKS]: 0xb8945a,
   [BLOCK_TYPES.CRAFTING_TABLE]: 0x8b6914,
+  [BLOCK_TYPES.COBBLESTONE]: 0x8a8a8a,
 };
 
 export const BLOCK_NAMES: Record<number, string> = {
@@ -121,6 +126,7 @@ export const BLOCK_NAMES: Record<number, string> = {
   [BLOCK_TYPES.LEAVES]: 'Feuilles',
   [BLOCK_TYPES.PLANKS]: 'Planches',
   [BLOCK_TYPES.CRAFTING_TABLE]: 'Établi',
+  [BLOCK_TYPES.COBBLESTONE]: 'Pierres',
 };
 
 // Break time in seconds per block type
@@ -131,23 +137,23 @@ export const BLOCK_BREAK_TIME: Record<number, number> = {
   [BLOCK_TYPES.WOOD]: 4,
   [BLOCK_TYPES.SAND]: 0.7,
   [BLOCK_TYPES.LEAVES]: 0.3,
-  
   [BLOCK_TYPES.PLANKS]: 4,
   [BLOCK_TYPES.CRAFTING_TABLE]: 4,
+  [BLOCK_TYPES.COBBLESTONE]: 11,
 };
 
 // Wood-type blocks that the axe speeds up
 const WOOD_BLOCKS = new Set<number>([BLOCK_TYPES.WOOD, BLOCK_TYPES.PLANKS, BLOCK_TYPES.CRAFTING_TABLE]);
 
 // Blocks that require a pickaxe to drop items
-const PICKAXE_REQUIRED = new Set<number>([BLOCK_TYPES.STONE]);
+const PICKAXE_REQUIRED = new Set<number>([BLOCK_TYPES.STONE, BLOCK_TYPES.COBBLESTONE]);
 
 export function getBlockBreakTime(blockType: number, heldItem?: number | null): number {
   const base = BLOCK_BREAK_TIME[blockType] ?? 1;
   if (heldItem === ITEM_TYPES.WOODEN_AXE && WOOD_BLOCKS.has(blockType)) {
     return 2;
   }
-  if (heldItem === ITEM_TYPES.WOODEN_PICKAXE && blockType === BLOCK_TYPES.STONE) {
+  if (heldItem === ITEM_TYPES.WOODEN_PICKAXE && (blockType === BLOCK_TYPES.STONE || blockType === BLOCK_TYPES.COBBLESTONE)) {
     return 2.5;
   }
   return base;
@@ -225,50 +231,104 @@ export function generateTerrain(size: number = 100, seed: number = 42): WorldDat
     }
   }
 
-  // Add a hill with a stone cave near spawn
+  // Add a hill with a natural stone cave near spawn
   const hillCX = 8;
   const hillCZ = 8;
-  const hillRadius = 6;
-  const hillHeight = 6;
+  const hillRadius = 8;
+  const hillHeight = 8;
+  const caveRand = seededRand(seed * 17 + 3);
 
+  // Build the hill
   for (let hx = -hillRadius; hx <= hillRadius; hx++) {
     for (let hz = -hillRadius; hz <= hillRadius; hz++) {
       const dist = Math.sqrt(hx * hx + hz * hz);
       if (dist > hillRadius) continue;
       const wx = hillCX + hx;
       const wz = hillCZ + hz;
-      // Get existing surface height
+      // Irregular shape: add noise to the radius
+      const noiseOffset = smoothNoise((wx + seed * 5) * 0.3, (wz + seed * 5) * 0.3) * 2 - 1;
+      const effectiveRadius = hillRadius + noiseOffset * 1.5;
+      if (dist > effectiveRadius) continue;
       let baseY = 0;
       for (let sy = MAX_HEIGHT + hillHeight; sy >= 0; sy--) {
         if (world.has(posKey(wx, sy, wz))) { baseY = sy + 1; break; }
       }
-      const localHeight = Math.round(hillHeight * (1 - (dist / hillRadius) ** 2));
+      const heightNoise2 = smoothNoise((wx + seed * 7) * 0.2, (wz + seed * 7) * 0.2);
+      const localHeight = Math.round((hillHeight + heightNoise2 * 3) * (1 - (dist / effectiveRadius) ** 1.8));
+      if (localHeight <= 0) continue;
       for (let dy = 0; dy < localHeight; dy++) {
         world.set(posKey(wx, baseY + dy, wz), BLOCK_TYPES.STONE);
       }
-      // Grass cap
+      // Grass/dirt cap
       if (localHeight > 0) {
         world.set(posKey(wx, baseY + localHeight - 1, wz), BLOCK_TYPES.GRASS);
+        if (localHeight > 1) {
+          world.set(posKey(wx, baseY + localHeight - 2, wz), BLOCK_TYPES.DIRT);
+        }
       }
     }
   }
 
-  // Carve a cave entrance into the hill (south-facing, z direction)
-  const caveY = (() => {
+  // Carve a natural cave that goes underground
+  // Cave entrance facing south (negative Z), then curves down
+  const entranceBaseY = (() => {
     for (let sy = MAX_HEIGHT + hillHeight; sy >= 0; sy--) {
-      if (world.has(posKey(hillCX, sy, hillCZ - hillRadius))) return sy + 1;
+      if (world.has(posKey(hillCX, sy, hillCZ - hillRadius + 2))) return sy;
     }
-    return SEA_LEVEL + 1;
+    return SEA_LEVEL + 2;
   })();
 
-  for (let depth = 0; depth < 5; depth++) {
-    const cz = hillCZ - hillRadius + 1 + depth;
-    for (let dx = -1; dx <= 1; dx++) {
-      for (let dy = 0; dy <= 1; dy++) {
-        world.delete(posKey(hillCX + dx, caveY + dy, cz));
+  // Cave path: a series of points the cave follows
+  const cavePath: { x: number; y: number; z: number; r: number }[] = [];
+  let cx = hillCX, cy = entranceBaseY, cz = hillCZ - hillRadius + 1;
+  
+  // Entrance section - going into the hill
+  for (let i = 0; i < 6; i++) {
+    cavePath.push({ x: cx, y: cy, z: cz, r: 2.2 + caveRand() * 0.5 });
+    cz += 1;
+    cx += Math.round(caveRand() * 0.8 - 0.4);
+  }
+  // Descending section - going underground
+  for (let i = 0; i < 6; i++) {
+    cavePath.push({ x: cx, y: cy, z: cz, r: 2.0 + caveRand() * 0.6 });
+    cz += 1;
+    cy -= 1;
+    cx += Math.round(caveRand() * 1.2 - 0.6);
+  }
+  // Deep chamber
+  for (let i = 0; i < 4; i++) {
+    cavePath.push({ x: cx, y: cy, z: cz, r: 2.8 + caveRand() * 0.8 });
+    cz += Math.round(caveRand() * 2 - 0.5);
+    cx += Math.round(caveRand() * 2 - 1);
+  }
+
+  // Carve the cave using spherical carving along the path
+  for (const pt of cavePath) {
+    const r = pt.r;
+    const ri = Math.ceil(r);
+    for (let dx = -ri; dx <= ri; dx++) {
+      for (let dy = -ri; dy <= ri; dy++) {
+        for (let dz = -ri; dz <= ri; dz++) {
+          const dist = Math.sqrt(dx * dx + dy * dy * 1.2 + dz * dz);
+          // Add noise to make walls irregular
+          const wallNoise = smoothNoise((pt.x + dx) * 0.5 + seed * 11, (pt.z + dz) * 0.5 + seed * 11) * 0.6;
+          if (dist < r + wallNoise - 0.3) {
+            const wx = pt.x + dx;
+            const wy = pt.y + dy;
+            const wz = pt.z + dz;
+            if (wy >= 0) {
+              world.delete(posKey(wx, wy, wz));
+            }
+          }
+        }
       }
     }
   }
 
   return world;
+}
+
+function seededRand(seed: number) {
+  let s = seed | 0;
+  return () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; };
 }
