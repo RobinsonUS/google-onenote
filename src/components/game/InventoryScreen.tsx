@@ -280,6 +280,17 @@ export function InventoryScreen({ inventory, onInventoryChange, onClose, selecte
       setHeldItems({ blockType: slot.blockType, count: slot.count });
       setIsSplitPick(false);
     } else if (selectedIndex === index) {
+      // Merge held items back into the slot
+      if (heldItems.blockType !== null && heldItems.count > 0) {
+        const next = inventory.map(s => ({ ...s }));
+        const current = next[index];
+        if (current.blockType === heldItems.blockType) {
+          next[index] = { blockType: heldItems.blockType, count: Math.min(MAX_STACK, current.count + heldItems.count) };
+        } else if (current.blockType === null || current.count <= 0) {
+          next[index] = { blockType: heldItems.blockType, count: heldItems.count };
+        }
+        onInventoryChange(next);
+      }
       setSelectedIndex(null);
       setHeldItems({ blockType: null, count: 0 });
     } else {
