@@ -64,6 +64,15 @@ export const ITEM_TYPES = {
 
 export type ItemType = typeof ITEM_TYPES[keyof typeof ITEM_TYPES];
 
+export function isTool(id: number): boolean {
+  return id === ITEM_TYPES.WOODEN_AXE || id === ITEM_TYPES.WOODEN_PICKAXE;
+}
+
+export const TOOL_MAX_DURABILITY: Record<number, number> = {
+  [ITEM_TYPES.WOODEN_AXE]: 30,
+  [ITEM_TYPES.WOODEN_PICKAXE]: 60,
+};
+
 export function isItem(id: number): boolean {
   return id >= 100;
 }

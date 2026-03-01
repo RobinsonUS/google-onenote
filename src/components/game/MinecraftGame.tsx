@@ -2,7 +2,7 @@ import { useRef, useState, useCallback, useEffect } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Sky } from "@react-three/drei";
 import * as THREE from "three";
-import { generateTerrain, WorldData, BLOCK_TYPES, posKey, BlockType, isItem, getBlockBreakTime, canHarvestBlock } from "@/lib/terrain";
+import { generateTerrain, WorldData, BLOCK_TYPES, posKey, BlockType, isItem, getBlockBreakTime, canHarvestBlock, isTool } from "@/lib/terrain";
 import { VoxelChunk } from "./VoxelChunk";
 import { TouchJoystick } from "./TouchJoystick";
 import { HotBar, InventorySlot, addToInventory, removeFromInventory } from "./HotBar";
@@ -305,6 +305,21 @@ export function MinecraftGame() {
           droppedItemsRef.current.push(createDroppedItem(bx, by, bz, bt));
         }
         mutateWorld(w => w.delete(key));
+        // Reduce durability of held tool
+        if (heldBlockType !== null && isTool(heldBlockType)) {
+          setInventory(inv => {
+            const next = inv.map(s => ({ ...s }));
+            const idx = selectedIndexRef.current;
+            const slot = next[idx];
+            if (slot && slot.blockType === heldBlockType && slot.durability !== undefined) {
+              slot.durability -= 1;
+              if (slot.durability <= 0) {
+                next[idx] = { blockType: null, count: 0 };
+              }
+            }
+            return next;
+          });
+        }
       }
       miningRef.current = null; setMiningProgress(0);
       if (isHoldingRef.current) {
