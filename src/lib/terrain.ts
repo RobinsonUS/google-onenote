@@ -225,5 +225,50 @@ export function generateTerrain(size: number = 100, seed: number = 42): WorldDat
     }
   }
 
+  // Add a hill with a stone cave near spawn
+  const hillCX = 8;
+  const hillCZ = 8;
+  const hillRadius = 6;
+  const hillHeight = 6;
+
+  for (let hx = -hillRadius; hx <= hillRadius; hx++) {
+    for (let hz = -hillRadius; hz <= hillRadius; hz++) {
+      const dist = Math.sqrt(hx * hx + hz * hz);
+      if (dist > hillRadius) continue;
+      const wx = hillCX + hx;
+      const wz = hillCZ + hz;
+      // Get existing surface height
+      let baseY = 0;
+      for (let sy = MAX_HEIGHT + hillHeight; sy >= 0; sy--) {
+        if (world.has(posKey(wx, sy, wz))) { baseY = sy + 1; break; }
+      }
+      const localHeight = Math.round(hillHeight * (1 - (dist / hillRadius) ** 2));
+      for (let dy = 0; dy < localHeight; dy++) {
+        world.set(posKey(wx, baseY + dy, wz), BLOCK_TYPES.STONE);
+      }
+      // Grass cap
+      if (localHeight > 0) {
+        world.set(posKey(wx, baseY + localHeight - 1, wz), BLOCK_TYPES.GRASS);
+      }
+    }
+  }
+
+  // Carve a cave entrance into the hill (south-facing, z direction)
+  const caveY = (() => {
+    for (let sy = MAX_HEIGHT + hillHeight; sy >= 0; sy--) {
+      if (world.has(posKey(hillCX, sy, hillCZ - hillRadius))) return sy + 1;
+    }
+    return SEA_LEVEL + 1;
+  })();
+
+  for (let depth = 0; depth < 5; depth++) {
+    const cz = hillCZ - hillRadius + 1 + depth;
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = 0; dy <= 1; dy++) {
+        world.delete(posKey(hillCX + dx, caveY + dy, cz));
+      }
+    }
+  }
+
   return world;
 }
