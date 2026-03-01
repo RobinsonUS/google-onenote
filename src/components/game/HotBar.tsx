@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BLOCK_NAMES, isItem, ITEM_TYPES, getItemOrBlockName } from "@/lib/terrain";
+import { BLOCK_NAMES, isItem, ITEM_TYPES, getItemOrBlockName, isTool, TOOL_MAX_DURABILITY } from "@/lib/terrain";
 import { onAtlasUpdate } from "@/lib/textures";
 import { renderBlockIconToDataURL, clearIconCache } from "@/lib/blockIconRenderer";
 
@@ -12,6 +12,7 @@ const ITEM_TEXTURES: Record<number, string> = {
 export interface InventorySlot {
   blockType: number | null;
   count: number;
+  durability?: number; // only for tools
 }
 
 export const HOTBAR_SIZE = 9;
@@ -21,8 +22,18 @@ export function createEmptyInventory(): InventorySlot[] {
   return Array.from({ length: HOTBAR_SIZE }, () => ({ blockType: null, count: 0 }));
 }
 
-export function addToInventory(inventory: InventorySlot[], blockType: number): InventorySlot[] {
+export function addToInventory(inventory: InventorySlot[], blockType: number, durability?: number): InventorySlot[] {
   const next = inventory.map(s => ({ ...s }));
+  // Tools are never stackable
+  if (isTool(blockType)) {
+    const empty = next.find(s => s.blockType === null || s.count === 0);
+    if (empty) {
+      empty.blockType = blockType;
+      empty.count = 1;
+      empty.durability = durability ?? TOOL_MAX_DURABILITY[blockType];
+    }
+    return next;
+  }
   const existing = next.find(s => s.blockType === blockType && s.count > 0 && s.count < MAX_STACK);
   if (existing) {
     existing.count++;
@@ -113,6 +124,18 @@ export function HotBar({ inventory, selectedIndex, onSelect, onOpenInventory }: 
                     fontSize: 8, color: '#fff', lineHeight: 1,
                   }}>
                     {slot.count}
+                  </div>
+                )}
+                {slot.durability !== undefined && isTool(slot.blockType) && slot.durability < TOOL_MAX_DURABILITY[slot.blockType] && (
+                  <div style={{
+                    position: 'absolute', bottom: 2, left: 4, right: 4, height: 3,
+                    background: '#555', borderRadius: 1,
+                  }}>
+                    <div style={{
+                      height: '100%', borderRadius: 1,
+                      width: `${(slot.durability / TOOL_MAX_DURABILITY[slot.blockType]) * 100}%`,
+                      background: slot.durability / TOOL_MAX_DURABILITY[slot.blockType] > 0.3 ? '#4caf50' : '#f44336',
+                    }} />
                   </div>
                 )}
               </>

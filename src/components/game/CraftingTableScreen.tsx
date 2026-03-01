@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { InventorySlot, HOTBAR_SIZE, MAX_STACK } from "./HotBar";
-import { BLOCK_TYPES, isItem, ITEM_TYPES } from "@/lib/terrain";
+import { BLOCK_TYPES, isItem, ITEM_TYPES, isTool, TOOL_MAX_DURABILITY } from "@/lib/terrain";
 import { onAtlasUpdate } from "@/lib/textures";
 import { renderBlockIconToDataURL, clearIconCache } from "@/lib/blockIconRenderer";
 import { TOTAL_SLOTS } from "./InventoryScreen";
@@ -199,18 +199,28 @@ export function CraftingTableScreen({ inventory, onInventoryChange, onClose, sel
     if (craftResult.blockType === null || craftResult.count <= 0) return;
     const nextInv = inventory.map(s => ({ ...s }));
     let remaining = craftResult.count;
-    for (let i = 0; i < nextInv.length && remaining > 0; i++) {
-      if (nextInv[i].blockType === craftResult.blockType && nextInv[i].count < MAX_STACK) {
-        const canAdd = Math.min(remaining, MAX_STACK - nextInv[i].count);
-        nextInv[i] = { blockType: craftResult.blockType, count: nextInv[i].count + canAdd };
-        remaining -= canAdd;
+    const craftedDurability = isTool(craftResult.blockType) ? TOOL_MAX_DURABILITY[craftResult.blockType] : undefined;
+    if (isTool(craftResult.blockType)) {
+      for (let i = 0; i < nextInv.length && remaining > 0; i++) {
+        if (nextInv[i].blockType === null || nextInv[i].count <= 0) {
+          nextInv[i] = { blockType: craftResult.blockType, count: 1, durability: craftedDurability };
+          remaining--;
+        }
       }
-    }
-    for (let i = 0; i < nextInv.length && remaining > 0; i++) {
-      if (nextInv[i].blockType === null || nextInv[i].count <= 0) {
-        const canAdd = Math.min(remaining, MAX_STACK);
-        nextInv[i] = { blockType: craftResult.blockType, count: canAdd };
-        remaining -= canAdd;
+    } else {
+      for (let i = 0; i < nextInv.length && remaining > 0; i++) {
+        if (nextInv[i].blockType === craftResult.blockType && nextInv[i].count < MAX_STACK) {
+          const canAdd = Math.min(remaining, MAX_STACK - nextInv[i].count);
+          nextInv[i] = { blockType: craftResult.blockType, count: nextInv[i].count + canAdd };
+          remaining -= canAdd;
+        }
+      }
+      for (let i = 0; i < nextInv.length && remaining > 0; i++) {
+        if (nextInv[i].blockType === null || nextInv[i].count <= 0) {
+          const canAdd = Math.min(remaining, MAX_STACK);
+          nextInv[i] = { blockType: craftResult.blockType, count: canAdd };
+          remaining -= canAdd;
+        }
       }
     }
     if (remaining > 0) return;
@@ -446,6 +456,18 @@ export function CraftingTableScreen({ inventory, onInventoryChange, onClose, sel
             {displayCount > 1 && (
               <div className="mc-text" style={{ position: 'absolute', bottom: 1, right: 3, fontSize: 7, color: '#fff', lineHeight: 1 }}>
                 {isSplitTarget ? displayCount : slot.count}
+              </div>
+            )}
+            {slot.durability !== undefined && isTool(slot.blockType) && slot.durability < TOOL_MAX_DURABILITY[slot.blockType] && (
+              <div style={{
+                position: 'absolute', bottom: 2, left: 4, right: 4, height: 3,
+                background: '#555', borderRadius: 1,
+              }}>
+                <div style={{
+                  height: '100%', borderRadius: 1,
+                  width: `${(slot.durability / TOOL_MAX_DURABILITY[slot.blockType]) * 100}%`,
+                  background: slot.durability / TOOL_MAX_DURABILITY[slot.blockType] > 0.3 ? '#4caf50' : '#f44336',
+                }} />
               </div>
             )}
           </>
