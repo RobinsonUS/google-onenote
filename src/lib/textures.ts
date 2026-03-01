@@ -159,7 +159,7 @@ const BLOCK_TEXTURES: Record<number, [Pixel[][], Pixel[][], Pixel[][]]> = {
   [BLOCK_TYPES.SAND]:  [SAND, SAND, SAND],
   [BLOCK_TYPES.WATER]: [WATER, WATER, WATER],
   [BLOCK_TYPES.LEAVES]:[LEAVES, LEAVES, LEAVES],
-  [BLOCK_TYPES.SNOW]:  [SNOW, SNOW_SIDE, DIRT],
+  
   [BLOCK_TYPES.PLANKS]:[PLANKS, PLANKS, PLANKS],
   [BLOCK_TYPES.CRAFTING_TABLE]: [CRAFTING_TABLE_TOP, CRAFTING_TABLE_SIDE, CRAFTING_TABLE_BOTTOM],
 };
@@ -209,7 +209,7 @@ export function getBlockAtlasTexture(): THREE.CanvasTexture {
     data[idx] = pixel[0]; data[idx+1] = pixel[1]; data[idx+2] = pixel[2]; data[idx+3] = 255;
   }
 
-  const blockTypes = [BLOCK_TYPES.GRASS, BLOCK_TYPES.DIRT, BLOCK_TYPES.STONE, BLOCK_TYPES.WOOD, BLOCK_TYPES.SAND, BLOCK_TYPES.WATER, BLOCK_TYPES.LEAVES, BLOCK_TYPES.SNOW, BLOCK_TYPES.PLANKS, BLOCK_TYPES.CRAFTING_TABLE];
+  const blockTypes = [BLOCK_TYPES.GRASS, BLOCK_TYPES.DIRT, BLOCK_TYPES.STONE, BLOCK_TYPES.WOOD, BLOCK_TYPES.SAND, BLOCK_TYPES.WATER, BLOCK_TYPES.LEAVES, BLOCK_TYPES.PLANKS, BLOCK_TYPES.CRAFTING_TABLE];
 
   blockTypes.forEach((bt, colIdx) => {
     const tex = BLOCK_TEXTURES[bt];
@@ -234,14 +234,14 @@ export function getBlockAtlasTexture(): THREE.CanvasTexture {
   // Overlay real textures asynchronously
   const dirtCol = BLOCK_ATLAS_COL[BLOCK_TYPES.DIRT];
   const grassCol = BLOCK_ATLAS_COL[BLOCK_TYPES.GRASS];
-  const snowCol = BLOCK_ATLAS_COL[BLOCK_TYPES.SNOW];
+  
   const stoneCol = BLOCK_ATLAS_COL[BLOCK_TYPES.STONE];
   const sandCol = BLOCK_ATLAS_COL[BLOCK_TYPES.SAND];
   const woodCol = BLOCK_ATLAS_COL[BLOCK_TYPES.WOOD];
 
   loadTextureOverlay(texture, canvas, '/textures/dirt.webp', [
     [dirtCol, 0], [dirtCol, 1], [dirtCol, 2],
-    [grassCol, 2], [snowCol, 2],
+    [grassCol, 2],
   ]);
   loadTextureOverlay(texture, canvas, '/textures/stone.webp', [
     [stoneCol, 0], [stoneCol, 1], [stoneCol, 2],
@@ -281,7 +281,7 @@ export function getBlockAtlasTexture(): THREE.CanvasTexture {
 
 const BLOCK_ATLAS_COL: Record<number, number> = {
   [BLOCK_TYPES.GRASS]: 0, [BLOCK_TYPES.DIRT]: 1, [BLOCK_TYPES.STONE]: 2, [BLOCK_TYPES.WOOD]: 3,
-  [BLOCK_TYPES.SAND]: 4, [BLOCK_TYPES.WATER]: 5, [BLOCK_TYPES.LEAVES]: 6, [BLOCK_TYPES.SNOW]: 7, [BLOCK_TYPES.PLANKS]: 8, [BLOCK_TYPES.CRAFTING_TABLE]: 9,
+  [BLOCK_TYPES.SAND]: 4, [BLOCK_TYPES.WATER]: 5, [BLOCK_TYPES.LEAVES]: 6, [BLOCK_TYPES.PLANKS]: 7, [BLOCK_TYPES.CRAFTING_TABLE]: 8,
 };
 
 export function getBlockUV(blockType: number, faceRow: 0 | 1 | 2): [number, number, number, number] {
