@@ -4,7 +4,7 @@ import { WorldData, BLOCK_TYPES, posKey } from "@/lib/terrain";
 import { getBlockAtlasTexture, getBlockUV } from "@/lib/textures";
 
 const CHUNK_SIZE = 10;
-const MAX_Y = 30; // max realistic height (terrain ~21 + trees)
+const MAX_Y = 15; // reduced: terrain ~6 + trees ~6
 
 interface ChunkedVoxelWorldProps {
   world: WorldData;

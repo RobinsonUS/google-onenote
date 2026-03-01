@@ -173,8 +173,8 @@ export function posKey(x: number, y: number, z: number): string {
 
 export function generateTerrain(size: number = 100, seed: number = 42): WorldData {
   const world: WorldData = new Map();
-  const SEA_LEVEL = 6;
-  const MAX_HEIGHT = 15;
+  const SEA_LEVEL = 3;
+  const MAX_HEIGHT = 3;
 
   for (let x = -size / 2; x < size / 2; x++) {
     for (let z = -size / 2; z < size / 2; z++) {
@@ -201,7 +201,7 @@ export function generateTerrain(size: number = 100, seed: number = 42): WorldDat
       }
 
       // Add trees occasionally
-      if (height >= SEA_LEVEL + 2 && height <= SEA_LEVEL + 8) {
+      if (height >= SEA_LEVEL + 1 && height <= SEA_LEVEL + 4) {
         const treeNoise = hash(x * 7 + seed, z * 7 + seed);
         if (treeNoise > 0.92) {
           // Tree trunk
