@@ -3,8 +3,8 @@ import * as THREE from "three";
 import { WorldData, BLOCK_TYPES, posKey } from "@/lib/terrain";
 import { getBlockAtlasTexture, getBlockUV } from "@/lib/textures";
 
-const CHUNK_SIZE = 10;
-const MAX_Y = 15; // reduced: terrain ~6 + trees ~6
+const CHUNK_SIZE = 8;
+const MAX_Y = 18; // terrain ~10 + trees ~6
 
 interface ChunkedVoxelWorldProps {
   world: WorldData;
@@ -174,20 +174,17 @@ const ChunkMesh = memo(function ChunkMesh({ world, cx, cz, version }: { world: W
     }
 
     const id = ++buildIdRef.current;
-    const timer = setTimeout(() => {
-      if (id !== buildIdRef.current) return;
-      const newGeo = buildChunkMesh(world, cx, cz);
-      // Update cache
-      const oldCached = geoCache.get(cacheKey);
-      if (oldCached && oldCached.geo !== newGeo) oldCached.geo.dispose();
-      if (newGeo) {
-        geoCache.set(cacheKey, { geo: newGeo, version });
-      } else {
-        geoCache.delete(cacheKey);
-      }
-      setGeo(newGeo);
-    }, 0);
-    return () => clearTimeout(timer);
+    // Build synchronously to avoid flicker/delay
+    if (id !== buildIdRef.current) return;
+    const newGeo = buildChunkMesh(world, cx, cz);
+    const oldCached = geoCache.get(cacheKey);
+    if (oldCached && oldCached.geo !== newGeo) oldCached.geo.dispose();
+    if (newGeo) {
+      geoCache.set(cacheKey, { geo: newGeo, version });
+    } else {
+      geoCache.delete(cacheKey);
+    }
+    setGeo(newGeo);
   }, [version, cx, cz, world, cacheKey]);
 
   if (!geo) return null;
