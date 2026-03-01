@@ -66,7 +66,7 @@ function BlockIcon({ blockType }: { blockType: number }) {
       src={src}
       width={40}
       height={40}
-      style={{ imageRendering: 'auto', display: 'block', filter: isItem(blockType) ? 'none' : 'saturate(1.45) brightness(1.1)', mixBlendMode: isItem(blockType) ? 'multiply' : undefined }}
+      style={{ imageRendering: 'auto', display: 'block', filter: 'saturate(1.45) brightness(1.35)' }}
     />
   );
 }
