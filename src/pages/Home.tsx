@@ -36,7 +36,7 @@ const Home = ({ onAccessGame }: HomeProps) => {
           type="submit"
           className="h-11 px-6 rounded-xl bg-purple-600 text-white font-medium hover:bg-purple-700 transition-colors shadow-sm"
         >
-          Valider
+          Effacer
         </button>
       </form>
     </div>
