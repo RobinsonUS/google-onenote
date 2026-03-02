@@ -165,7 +165,7 @@ export function getBlockBreakTime(blockType: number, heldItem?: number | null): 
   if (heldItem === ITEM_TYPES.WOODEN_AXE && WOOD_BLOCKS.has(blockType)) {
     return 2;
   }
-  if (heldItem === ITEM_TYPES.WOODEN_PICKAXE && (blockType === BLOCK_TYPES.STONE || blockType === BLOCK_TYPES.COBBLESTONE)) {
+  if (heldItem === ITEM_TYPES.WOODEN_PICKAXE && (blockType === BLOCK_TYPES.STONE || blockType === BLOCK_TYPES.COBBLESTONE || blockType === BLOCK_TYPES.COAL_ORE)) {
     return 2.5;
   }
   return base;
