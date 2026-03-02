@@ -53,6 +53,7 @@ export const BLOCK_TYPES = {
   PLANKS: 9,
   CRAFTING_TABLE: 10,
   COBBLESTONE: 11,
+  BEDROCK: 12,
 } as const;
 
 // Non-block items (IDs >= 100, cannot be placed in the world)
@@ -102,6 +103,7 @@ export const BLOCK_COLORS: Record<number, string> = {
   [BLOCK_TYPES.PLANKS]: '#B8945A',
   [BLOCK_TYPES.CRAFTING_TABLE]: '#8B6914',
   [BLOCK_TYPES.COBBLESTONE]: '#8A8A8A',
+  [BLOCK_TYPES.BEDROCK]: '#3A3A3A',
 };
 
 export const BLOCK_THREE_COLORS: Record<number, number> = {
@@ -115,6 +117,7 @@ export const BLOCK_THREE_COLORS: Record<number, number> = {
   [BLOCK_TYPES.PLANKS]: 0xb8945a,
   [BLOCK_TYPES.CRAFTING_TABLE]: 0x8b6914,
   [BLOCK_TYPES.COBBLESTONE]: 0x8a8a8a,
+  [BLOCK_TYPES.BEDROCK]: 0x3a3a3a,
 };
 
 export const BLOCK_NAMES: Record<number, string> = {
@@ -127,6 +130,7 @@ export const BLOCK_NAMES: Record<number, string> = {
   [BLOCK_TYPES.PLANKS]: 'Planches',
   [BLOCK_TYPES.CRAFTING_TABLE]: 'Établi',
   [BLOCK_TYPES.COBBLESTONE]: 'Pierres',
+  [BLOCK_TYPES.BEDROCK]: 'Bedrock',
 };
 
 // Break time in seconds per block type
@@ -193,7 +197,9 @@ export function generateTerrain(size: number = 100, seed: number = 42): WorldDat
       const sandNoise = smoothNoise((x + seed * 3) * 0.08, (z + seed * 3) * 0.08);
       const isSandPatch = sandNoise > 0.65;
 
-      for (let y = 0; y <= height; y++) {
+      // Bedrock at y=0
+      world.set(posKey(x, 0, z), BLOCK_TYPES.BEDROCK);
+      for (let y = 1; y <= height; y++) {
         let blockType: BlockType;
         if (y === height) {
           blockType = isSandPatch ? BLOCK_TYPES.SAND : BLOCK_TYPES.GRASS;

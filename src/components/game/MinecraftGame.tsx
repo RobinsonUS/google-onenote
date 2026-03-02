@@ -299,7 +299,7 @@ export function MinecraftGame() {
       const parts = key.split(',');
       const bx = +parts[0], by = +parts[1], bz = +parts[2];
       const bt = worldRef.current.get(key);
-      if (bt !== undefined && bt !== BLOCK_TYPES.AIR) {
+      if (bt !== undefined && bt !== BLOCK_TYPES.AIR && bt !== BLOCK_TYPES.BEDROCK) {
         emitParticles(bx, by, bz, bt);
         const heldBlockType = inventoryRef.current[selectedIndexRef.current]?.blockType ?? null;
         if (canHarvestBlock(bt, heldBlockType)) {
