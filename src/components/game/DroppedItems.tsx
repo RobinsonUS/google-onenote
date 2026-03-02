@@ -2,6 +2,7 @@ import { useRef, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { getBlockAtlasTexture, getBlockUV } from "@/lib/textures";
+import { isItem, ITEM_TYPES } from "@/lib/terrain";
 
 export interface DroppedItem {
   id: number;
@@ -33,6 +34,24 @@ const PICKUP_RADIUS = 2.0;
 const MERGE_RADIUS = 2.0;
 const DESPAWN_TIME = 300;
 const DESPAWN_DISTANCE = 20;
+
+const ITEM_TEXTURE_PATHS: Record<number, string> = {
+  [ITEM_TYPES.COAL]: '/textures/coal.png',
+  [ITEM_TYPES.STICK]: '/textures/stick.webp',
+};
+
+const itemTextureCache = new Map<number, THREE.Texture>();
+
+function getItemTexture(itemType: number): THREE.Texture | null {
+  if (itemTextureCache.has(itemType)) return itemTextureCache.get(itemType)!;
+  const path = ITEM_TEXTURE_PATHS[itemType];
+  if (!path) return null;
+  const tex = new THREE.TextureLoader().load(path);
+  tex.magFilter = THREE.NearestFilter;
+  tex.minFilter = THREE.NearestFilter;
+  itemTextureCache.set(itemType, tex);
+  return tex;
+}
 
 function makeItemGeo(blockType: number): THREE.BoxGeometry {
   const geo = new THREE.BoxGeometry(ITEM_SIZE, ITEM_SIZE, ITEM_SIZE);
@@ -70,6 +89,24 @@ export function DroppedItems({ itemsRef, playerPosRef, onPickup, worldRef }: Dro
       geoCache.current.set(blockType, makeItemGeo(blockType));
     }
     return geoCache.current.get(blockType)!;
+  };
+
+  const itemPlaneGeo = useMemo(() => new THREE.PlaneGeometry(ITEM_SIZE, ITEM_SIZE), []);
+
+  const createItemMesh = (blockType: number): THREE.Mesh => {
+    if (isItem(blockType)) {
+      const tex = getItemTexture(blockType);
+      const itemMat = new THREE.MeshStandardMaterial({
+        map: tex,
+        roughness: 1,
+        metalness: 0,
+        transparent: true,
+        alphaTest: 0.5,
+        side: THREE.DoubleSide,
+      });
+      return new THREE.Mesh(itemPlaneGeo, itemMat);
+    }
+    return new THREE.Mesh(getGeo(blockType), mat);
   };
 
   const posKey = (x: number, y: number, z: number) => `${Math.floor(x)},${Math.floor(y)},${Math.floor(z)}`;
@@ -161,7 +198,7 @@ export function DroppedItems({ itemsRef, playerPosRef, onPickup, worldRef }: Dro
             ? [[-0.08, 0, -0.08], [0.08, 0.06, 0.08]]
             : [[-0.1, 0, -0.1], [0.1, 0.05, 0.08], [0, 0.1, -0.05]];
         for (const [ox, oy, oz] of offsets) {
-          const m = new THREE.Mesh(getGeo(item.blockType), mat);
+          const m = createItemMesh(item.blockType);
           m.position.set(ox, oy, oz);
           itemGroup.add(m);
         }
