@@ -54,6 +54,7 @@ export const BLOCK_TYPES = {
   CRAFTING_TABLE: 10,
   COBBLESTONE: 11,
   BEDROCK: 12,
+  COAL_ORE: 13,
 } as const;
 
 // Non-block items (IDs >= 100, cannot be placed in the world)
@@ -61,6 +62,7 @@ export const ITEM_TYPES = {
   STICK: 100,
   WOODEN_AXE: 101,
   WOODEN_PICKAXE: 102,
+  COAL: 103,
 } as const;
 
 export type ItemType = typeof ITEM_TYPES[keyof typeof ITEM_TYPES];
@@ -82,11 +84,13 @@ export const ITEM_NAMES: Record<number, string> = {
   [ITEM_TYPES.STICK]: 'Bâton',
   [ITEM_TYPES.WOODEN_AXE]: 'Hache en bois',
   [ITEM_TYPES.WOODEN_PICKAXE]: 'Pioche en bois',
+  [ITEM_TYPES.COAL]: 'Charbon',
 };
 
 // What a block drops when mined (if different from itself)
 export const BLOCK_DROP: Partial<Record<number, number>> = {
   [BLOCK_TYPES.STONE]: BLOCK_TYPES.COBBLESTONE,
+  [BLOCK_TYPES.COAL_ORE]: ITEM_TYPES.COAL,
 };
 
 export type BlockType = typeof BLOCK_TYPES[keyof typeof BLOCK_TYPES];
@@ -104,6 +108,7 @@ export const BLOCK_COLORS: Record<number, string> = {
   [BLOCK_TYPES.CRAFTING_TABLE]: '#8B6914',
   [BLOCK_TYPES.COBBLESTONE]: '#8A8A8A',
   [BLOCK_TYPES.BEDROCK]: '#3A3A3A',
+  [BLOCK_TYPES.COAL_ORE]: '#4A4A4A',
 };
 
 export const BLOCK_THREE_COLORS: Record<number, number> = {
@@ -118,6 +123,7 @@ export const BLOCK_THREE_COLORS: Record<number, number> = {
   [BLOCK_TYPES.CRAFTING_TABLE]: 0x8b6914,
   [BLOCK_TYPES.COBBLESTONE]: 0x8a8a8a,
   [BLOCK_TYPES.BEDROCK]: 0x3a3a3a,
+  [BLOCK_TYPES.COAL_ORE]: 0x4a4a4a,
 };
 
 export const BLOCK_NAMES: Record<number, string> = {
@@ -131,6 +137,7 @@ export const BLOCK_NAMES: Record<number, string> = {
   [BLOCK_TYPES.CRAFTING_TABLE]: 'Établi',
   [BLOCK_TYPES.COBBLESTONE]: 'Pierres',
   [BLOCK_TYPES.BEDROCK]: 'Bedrock',
+  [BLOCK_TYPES.COAL_ORE]: 'Minerai de charbon',
 };
 
 // Break time in seconds per block type
@@ -144,13 +151,14 @@ export const BLOCK_BREAK_TIME: Record<number, number> = {
   [BLOCK_TYPES.PLANKS]: 4,
   [BLOCK_TYPES.CRAFTING_TABLE]: 4,
   [BLOCK_TYPES.COBBLESTONE]: 11,
+  [BLOCK_TYPES.COAL_ORE]: 11,
 };
 
 // Wood-type blocks that the axe speeds up
 const WOOD_BLOCKS = new Set<number>([BLOCK_TYPES.WOOD, BLOCK_TYPES.PLANKS, BLOCK_TYPES.CRAFTING_TABLE]);
 
 // Blocks that require a pickaxe to drop items
-const PICKAXE_REQUIRED = new Set<number>([BLOCK_TYPES.STONE, BLOCK_TYPES.COBBLESTONE]);
+const PICKAXE_REQUIRED = new Set<number>([BLOCK_TYPES.STONE, BLOCK_TYPES.COBBLESTONE, BLOCK_TYPES.COAL_ORE]);
 
 export function getBlockBreakTime(blockType: number, heldItem?: number | null): number {
   const base = BLOCK_BREAK_TIME[blockType] ?? 1;
@@ -206,7 +214,9 @@ export function generateTerrain(size: number = 100, seed: number = 42): WorldDat
         } else if (y > height - 3) {
           blockType = isSandPatch ? BLOCK_TYPES.SAND : BLOCK_TYPES.DIRT;
         } else {
-          blockType = BLOCK_TYPES.STONE;
+          // Stone layer — chance of coal ore
+          const coalNoise = hash(x * 13 + seed * 7, z * 13 + y * 31 + seed * 11);
+          blockType = coalNoise > 0.88 ? BLOCK_TYPES.COAL_ORE : BLOCK_TYPES.STONE;
         }
         world.set(posKey(x, y, z), blockType);
       }
@@ -322,7 +332,7 @@ export function generateTerrain(size: number = 100, seed: number = 42): WorldDat
             const wx = pt.x + dx;
             const wy = pt.y + dy;
             const wz = pt.z + dz;
-            if (wy >= 0) {
+            if (wy >= 1) {
               world.delete(posKey(wx, wy, wz));
             }
           }
