@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { BLOCK_TYPES } from "./terrain";
 
 const CELL = 16;
-const COLS = 13;
+const COLS = 14;
 const ROWS = 3;
 
 type Pixel = [number, number, number];
@@ -162,6 +162,16 @@ const BEDROCK: Pixel[][] = (() => {
   return Array.from({length:16}, () => Array.from({length:16}, () => palette[Math.floor(rand()*palette.length)]));
 })();
 
+const COAL_ORE: Pixel[][] = (() => {
+  const rand = seededRand(17);
+  const stone = [px(125,125,125), px(115,115,115), px(135,135,135)];
+  const coal = [px(40,40,40), px(30,30,30), px(50,50,50)];
+  return Array.from({length:16}, () => Array.from({length:16}, () => {
+    if (rand() < 0.25) return coal[Math.floor(rand()*coal.length)];
+    return stone[Math.floor(rand()*stone.length)];
+  }));
+})();
+
 // [top, side, bottom]
 const BLOCK_TEXTURES: Record<number, [Pixel[][], Pixel[][], Pixel[][]]> = {
   [BLOCK_TYPES.GRASS]: [GRASS_TOP, GRASS_SIDE, DIRT],
@@ -175,6 +185,7 @@ const BLOCK_TEXTURES: Record<number, [Pixel[][], Pixel[][], Pixel[][]]> = {
   [BLOCK_TYPES.CRAFTING_TABLE]: [CRAFTING_TABLE_TOP, CRAFTING_TABLE_SIDE, CRAFTING_TABLE_BOTTOM],
   [BLOCK_TYPES.COBBLESTONE]: [COBBLESTONE, COBBLESTONE, COBBLESTONE],
   [BLOCK_TYPES.BEDROCK]: [BEDROCK, BEDROCK, BEDROCK],
+  [BLOCK_TYPES.COAL_ORE]: [COAL_ORE, COAL_ORE, COAL_ORE],
 };
 
 let cachedTexture: THREE.CanvasTexture | null = null;
@@ -222,7 +233,7 @@ export function getBlockAtlasTexture(): THREE.CanvasTexture {
     data[idx] = pixel[0]; data[idx+1] = pixel[1]; data[idx+2] = pixel[2]; data[idx+3] = 255;
   }
 
-  const blockTypes = [BLOCK_TYPES.GRASS, BLOCK_TYPES.DIRT, BLOCK_TYPES.STONE, BLOCK_TYPES.WOOD, BLOCK_TYPES.SAND, BLOCK_TYPES.WATER, BLOCK_TYPES.LEAVES, BLOCK_TYPES.PLANKS, BLOCK_TYPES.CRAFTING_TABLE, BLOCK_TYPES.COBBLESTONE, BLOCK_TYPES.BEDROCK];
+  const blockTypes = [BLOCK_TYPES.GRASS, BLOCK_TYPES.DIRT, BLOCK_TYPES.STONE, BLOCK_TYPES.WOOD, BLOCK_TYPES.SAND, BLOCK_TYPES.WATER, BLOCK_TYPES.LEAVES, BLOCK_TYPES.PLANKS, BLOCK_TYPES.CRAFTING_TABLE, BLOCK_TYPES.COBBLESTONE, BLOCK_TYPES.BEDROCK, BLOCK_TYPES.COAL_ORE];
 
   blockTypes.forEach((bt, colIdx) => {
     const tex = BLOCK_TEXTURES[bt];
@@ -299,12 +310,17 @@ export function getBlockAtlasTexture(): THREE.CanvasTexture {
     [bedrockCol, 0], [bedrockCol, 1], [bedrockCol, 2],
   ]);
 
+  const coalOreCol = BLOCK_ATLAS_COL[BLOCK_TYPES.COAL_ORE];
+  loadTextureOverlay(texture, canvas, '/textures/coal_ore.webp', [
+    [coalOreCol, 0], [coalOreCol, 1], [coalOreCol, 2],
+  ]);
+
   return texture;
 }
 
 const BLOCK_ATLAS_COL: Record<number, number> = {
   [BLOCK_TYPES.GRASS]: 0, [BLOCK_TYPES.DIRT]: 1, [BLOCK_TYPES.STONE]: 2, [BLOCK_TYPES.WOOD]: 3,
-  [BLOCK_TYPES.SAND]: 4, [BLOCK_TYPES.WATER]: 5, [BLOCK_TYPES.LEAVES]: 6, [BLOCK_TYPES.PLANKS]: 7, [BLOCK_TYPES.CRAFTING_TABLE]: 8, [BLOCK_TYPES.COBBLESTONE]: 9, [BLOCK_TYPES.BEDROCK]: 10,
+  [BLOCK_TYPES.SAND]: 4, [BLOCK_TYPES.WATER]: 5, [BLOCK_TYPES.LEAVES]: 6, [BLOCK_TYPES.PLANKS]: 7, [BLOCK_TYPES.CRAFTING_TABLE]: 8, [BLOCK_TYPES.COBBLESTONE]: 9, [BLOCK_TYPES.BEDROCK]: 10, [BLOCK_TYPES.COAL_ORE]: 11,
 };
 
 export function getBlockUV(blockType: number, faceRow: 0 | 1 | 2): [number, number, number, number] {
